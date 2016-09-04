@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:tx="http://www.springframework.org/schema/tx"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+	    http://www.springframework.org/schema/beans/spring-beans.xsd
+	    http://www.springframework.org/schema/tx
+	    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--加载数据库配置信息-->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location">
+            <value>classpath:database.properties</value>
+        </property>
+        <property name="fileEncoding" value="utf-8"/>
+    </bean>
+    <!--数据源-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${driverClass}"/>
+        <property name="jdbcUrl" value="${jdbc.url}?zeroDateTimeBehavior=convertToNull&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="user" value="${jdbc.user}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!-- 指定连接数据库连接池的最小连接数 -->
+        <property name="minPoolSize" value="${c3p0.minPoolSize}"></property>
+        <!-- 指定连接数据库连接池的最大连接数 -->
+        <property name="maxPoolSize" value="${c3p0.maxPoolSize}"></property>
+        <!--从池中拿未使用的连接，超时设置，如果没有设置，就不超时-->
+        <property name="checkoutTimeout" value="${c3p0.checkoutTimeout}"></property>
+        <!--最多可以创建Statements对象的个数. 可以执行SQL语句的对象的个数-->
+        <property name="maxStatements" value="${c3p0.maxStatements}"></property>
+        <!--从连接池中取一个连接并且测试，测试不通过从新获取一个连接-->
+        <property name="testConnectionOnCheckout" value="${c3p0.testConnectionOnCheckout}"></property>
+        <!-- 指定连接数据库连接池的连接的最大空闲时间 -->
+        <property name="maxIdleTime" value="${c3p0.maxIdleTime}"></property>
+    </bean>
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource">
+            <ref bean="dataSource"/>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.cache.use_query_cache">false</prop>
+                <prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+                <prop key="javax.persistence.validation.mode">none</prop>
+                <prop key="hibernate.show_sql">true</prop>
+            </props>
+        </property>
+        <!--扫描映射的实体类-->
+        <property name="packagesToScan" value="com"/>
+    </bean>
+
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <!--支持事务注解的（@Transactional）-->
+    <!--http://blog.csdn.net/catoop/article/details/50067785-->
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
+
+</beans>
